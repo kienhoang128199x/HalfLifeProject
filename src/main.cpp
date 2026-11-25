@@ -28,14 +28,19 @@ float lastY = HEIGHT / 2.0f;
 bool firstMouse = true;
 
 
-// Read shader file
+// ============================================
+// LOAD SHADER
+// ============================================
+
 std::string loadShader(const std::string& path)
 {
     std::ifstream file(path);
 
     if (!file.is_open())
     {
-        throw std::runtime_error("Cannot open shader file: " + path);
+        throw std::runtime_error(
+            "Cannot open shader file: " + path
+        );
     }
 
     std::stringstream buffer;
@@ -45,7 +50,10 @@ std::string loadShader(const std::string& path)
 }
 
 
-// Compile shader
+// ============================================
+// COMPILE SHADER
+// ============================================
+
 GLuint compileShader(GLenum type, const std::string& source)
 {
     GLuint shader = glCreateShader(type);
@@ -56,34 +64,55 @@ GLuint compileShader(GLenum type, const std::string& source)
     glCompileShader(shader);
 
     GLint success;
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+
+    glGetShaderiv(
+        shader,
+        GL_COMPILE_STATUS,
+        &success
+    );
 
     if (!success)
     {
         char infoLog[512];
 
-        glGetShaderInfoLog(shader, 512, nullptr, infoLog);
+        glGetShaderInfoLog(
+            shader,
+            512,
+            nullptr,
+            infoLog
+        );
 
         std::cerr << "Shader compilation error:\n"
                   << infoLog << std::endl;
 
         glDeleteShader(shader);
 
-        throw std::runtime_error("Shader compilation failed");
+        throw std::runtime_error(
+            "Shader compilation failed"
+        );
     }
 
     return shader;
 }
 
 
-// Create shader program
+// ============================================
+// CREATE SHADER PROGRAM
+// ============================================
+
 GLuint createShaderProgram()
 {
     std::string vertexSource =
-        loadShader(std::string(ASSET_DIR) + "/shaders/vertex.glsl");
+        loadShader(
+            std::string(ASSET_DIR) +
+            "/shaders/vertex.glsl"
+        );
 
     std::string fragmentSource =
-        loadShader(std::string(ASSET_DIR) + "/shaders/fragment.glsl");
+        loadShader(
+            std::string(ASSET_DIR) +
+            "/shaders/fragment.glsl"
+        );
 
     GLuint vertexShader =
         compileShader(GL_VERTEX_SHADER, vertexSource);
@@ -99,13 +128,23 @@ GLuint createShaderProgram()
     glLinkProgram(program);
 
     GLint success;
-    glGetProgramiv(program, GL_LINK_STATUS, &success);
+
+    glGetProgramiv(
+        program,
+        GL_LINK_STATUS,
+        &success
+    );
 
     if (!success)
     {
         char infoLog[512];
 
-        glGetProgramInfoLog(program, 512, nullptr, infoLog);
+        glGetProgramInfoLog(
+            program,
+            512,
+            nullptr,
+            infoLog
+        );
 
         std::cerr << "Shader linking error:\n"
                   << infoLog << std::endl;
@@ -114,7 +153,9 @@ GLuint createShaderProgram()
         glDeleteShader(vertexShader);
         glDeleteShader(fragmentShader);
 
-        throw std::runtime_error("Shader linking failed");
+        throw std::runtime_error(
+            "Shader linking failed"
+        );
     }
 
     glDeleteShader(vertexShader);
@@ -124,8 +165,14 @@ GLuint createShaderProgram()
 }
 
 
-// Mouse callback
-void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+// ============================================
+// MOUSE CALLBACK
+// ============================================
+
+void mouse_callback(
+    GLFWwindow* window,
+    double xpos,
+    double ypos)
 {
     if (firstMouse)
     {
@@ -135,17 +182,26 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
         firstMouse = false;
     }
 
-    float xOffset = static_cast<float>(xpos) - lastX;
-    float yOffset = lastY - static_cast<float>(ypos);
+    float xOffset =
+        static_cast<float>(xpos) - lastX;
+
+    float yOffset =
+        lastY - static_cast<float>(ypos);
 
     lastX = static_cast<float>(xpos);
     lastY = static_cast<float>(ypos);
 
-    camera.ProcessMouseMovement(xOffset, yOffset);
+    camera.ProcessMouseMovement(
+        xOffset,
+        yOffset
+    );
 }
 
 
-// Keyboard input
+// ============================================
+// KEYBOARD INPUT
+// ============================================
+
 void processInput(GLFWwindow* window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -175,33 +231,109 @@ void processInput(GLFWwindow* window)
 }
 
 
+// ============================================
+// DRAW CUBE
+// ============================================
+
+void drawCube(
+    GLuint shaderProgram,
+    GLuint VAO,
+    const glm::mat4& model,
+    const glm::vec3& color,
+    bool useVertexColor)
+{
+    GLint modelLoc =
+        glGetUniformLocation(
+            shaderProgram,
+            "model"
+        );
+
+    GLint colorLoc =
+        glGetUniformLocation(
+            shaderProgram,
+            "objectColor"
+        );
+
+    GLint useVertexColorLoc =
+        glGetUniformLocation(
+            shaderProgram,
+            "useVertexColor"
+        );
+
+    glUniformMatrix4fv(
+        modelLoc,
+        1,
+        GL_FALSE,
+        glm::value_ptr(model)
+    );
+
+    glUniform3fv(
+        colorLoc,
+        1,
+        glm::value_ptr(color)
+    );
+
+    glUniform1i(
+        useVertexColorLoc,
+        useVertexColor ? 1 : 0
+    );
+
+    glBindVertexArray(VAO);
+
+    glDrawArrays(
+        GL_TRIANGLES,
+        0,
+        36
+    );
+}
+
+
+// ============================================
+// MAIN
+// ============================================
+
 int main()
 {
     // Initialize GLFW
     if (!glfwInit())
     {
-        std::cerr << "Failed to initialize GLFW" << std::endl;
+        std::cerr << "Failed to initialize GLFW"
+                  << std::endl;
+
         return -1;
     }
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(
+        GLFW_CONTEXT_VERSION_MAJOR,
+        3
+    );
+
+    glfwWindowHint(
+        GLFW_CONTEXT_VERSION_MINOR,
+        3
+    );
+
+    glfwWindowHint(
+        GLFW_OPENGL_PROFILE,
+        GLFW_OPENGL_CORE_PROFILE
+    );
 
     // Create window
     GLFWwindow* window = glfwCreateWindow(
         WIDTH,
         HEIGHT,
-        "HalfLife Clone",
+        "HalfLife Clone - Milestone 4",
         nullptr,
         nullptr
     );
 
     if (!window)
     {
-        std::cerr << "Failed to create GLFW window" << std::endl;
+        std::cerr << "Failed to create GLFW window"
+                  << std::endl;
 
         glfwTerminate();
+
         return -1;
     }
 
@@ -212,7 +344,8 @@ int main()
 
     if (glewInit() != GLEW_OK)
     {
-        std::cerr << "Failed to initialize GLEW" << std::endl;
+        std::cerr << "Failed to initialize GLEW"
+                  << std::endl;
 
         glfwDestroyWindow(window);
         glfwTerminate();
@@ -228,92 +361,111 @@ int main()
     glEnable(GL_DEPTH_TEST);
 
     // Capture mouse
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(
+        window,
+        GLFW_CURSOR,
+        GLFW_CURSOR_DISABLED
+    );
 
-    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetCursorPosCallback(
+        window,
+        mouse_callback
+    );
 
-    // Create shader program
     GLuint shaderProgram = 0;
     GLuint VAO = 0;
     GLuint VBO = 0;
 
     try
     {
+        // Create shader program
         shaderProgram = createShaderProgram();
 
-        // Cube vertices
-        // Each vertex: position (x,y,z) + color (r,g,b)
+
+        // ====================================
+        // CUBE VERTICES
+        // ====================================
+
+        // Each vertex:
+        // Position: x, y, z
+        // Color:    r, g, b
 
         float vertices[] = {
 
             // Front face - Red
-            -0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
-             0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
-             0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
+            -0.5f, -0.5f,  0.5f,  1, 0, 0,
+             0.5f, -0.5f,  0.5f,  1, 0, 0,
+             0.5f,  0.5f,  0.5f,  1, 0, 0,
 
-             0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
-            -0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
-            -0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
+             0.5f,  0.5f,  0.5f,  1, 0, 0,
+            -0.5f,  0.5f,  0.5f,  1, 0, 0,
+            -0.5f, -0.5f,  0.5f,  1, 0, 0,
 
 
             // Back face - Green
-            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
-             0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
-             0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
+            -0.5f, -0.5f, -0.5f,  0, 1, 0,
+             0.5f, -0.5f, -0.5f,  0, 1, 0,
+             0.5f,  0.5f, -0.5f,  0, 1, 0,
 
-             0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
-            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
-            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f,
+             0.5f,  0.5f, -0.5f,  0, 1, 0,
+            -0.5f,  0.5f, -0.5f,  0, 1, 0,
+            -0.5f, -0.5f, -0.5f,  0, 1, 0,
 
 
             // Left face - Blue
-            -0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f,
-            -0.5f,  0.5f, -0.5f,  0.0f, 0.0f, 1.0f,
-            -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 1.0f,
+            -0.5f,  0.5f,  0.5f,  0, 0, 1,
+            -0.5f,  0.5f, -0.5f,  0, 0, 1,
+            -0.5f, -0.5f, -0.5f,  0, 0, 1,
 
-            -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, 1.0f,
-            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, 1.0f,
-            -0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 1.0f,
+            -0.5f, -0.5f, -0.5f,  0, 0, 1,
+            -0.5f, -0.5f,  0.5f,  0, 0, 1,
+            -0.5f,  0.5f,  0.5f,  0, 0, 1,
 
 
             // Right face - Yellow
-             0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.0f,
-             0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f,
-             0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 0.0f,
+             0.5f,  0.5f,  0.5f,  1, 1, 0,
+             0.5f,  0.5f, -0.5f,  1, 1, 0,
+             0.5f, -0.5f, -0.5f,  1, 1, 0,
 
-             0.5f, -0.5f, -0.5f,  1.0f, 1.0f, 0.0f,
-             0.5f, -0.5f,  0.5f,  1.0f, 1.0f, 0.0f,
-             0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.0f,
+             0.5f, -0.5f, -0.5f,  1, 1, 0,
+             0.5f, -0.5f,  0.5f,  1, 1, 0,
+             0.5f,  0.5f,  0.5f,  1, 1, 0,
 
 
             // Top face - Cyan
-            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 1.0f,
-             0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 1.0f,
-             0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 1.0f,
+            -0.5f,  0.5f, -0.5f,  0, 1, 1,
+             0.5f,  0.5f, -0.5f,  0, 1, 1,
+             0.5f,  0.5f,  0.5f,  0, 1, 1,
 
-             0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 1.0f,
-            -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, 1.0f,
-            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, 1.0f,
+             0.5f,  0.5f,  0.5f,  0, 1, 1,
+            -0.5f,  0.5f,  0.5f,  0, 1, 1,
+            -0.5f,  0.5f, -0.5f,  0, 1, 1,
 
 
             // Bottom face - Magenta
-            -0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 1.0f,
-             0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 1.0f,
-             0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 1.0f,
+            -0.5f, -0.5f, -0.5f,  1, 0, 1,
+             0.5f, -0.5f, -0.5f,  1, 0, 1,
+             0.5f, -0.5f,  0.5f,  1, 0, 1,
 
-             0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 1.0f,
-            -0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 1.0f,
-            -0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 1.0f
+             0.5f, -0.5f,  0.5f,  1, 0, 1,
+            -0.5f, -0.5f,  0.5f,  1, 0, 1,
+            -0.5f, -0.5f, -0.5f,  1, 0, 1
         };
 
 
-        // Create VAO and VBO
+        // ====================================
+        // CREATE VAO / VBO
+        // ====================================
+
         glGenVertexArrays(1, &VAO);
         glGenBuffers(1, &VBO);
 
         glBindVertexArray(VAO);
 
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBindBuffer(
+            GL_ARRAY_BUFFER,
+            VBO
+        );
 
         glBufferData(
             GL_ARRAY_BUFFER,
@@ -349,7 +501,10 @@ int main()
         glBindVertexArray(0);
 
 
-        // Game loop
+        // ====================================
+        // GAME LOOP
+        // ====================================
+
         while (!glfwWindowShouldClose(window))
         {
             // Calculate delta time
@@ -357,58 +512,50 @@ int main()
                 static_cast<float>(glfwGetTime());
 
             deltaTime = currentFrame - lastFrame;
+
             lastFrame = currentFrame;
 
             // Process input
             processInput(window);
 
             // Clear screen
-            glClearColor(0.05f, 0.05f, 0.08f, 1.0f);
+            glClearColor(
+                0.05f,
+                0.05f,
+                0.08f,
+                1.0f
+            );
 
             glClear(
                 GL_COLOR_BUFFER_BIT |
                 GL_DEPTH_BUFFER_BIT
             );
 
+
             // Activate shader
             glUseProgram(shaderProgram);
 
-            // Model matrix
-            glm::mat4 model(1.0f);
-
-            model = glm::rotate(
-                model,
-                static_cast<float>(glfwGetTime()),
-                glm::vec3(0.5f, 1.0f, 0.0f)
-            );
 
             // View matrix
-            glm::mat4 view = camera.GetViewMatrix();
+            glm::mat4 view =
+                camera.GetViewMatrix();
 
             // Projection matrix
-            glm::mat4 projection = glm::perspective(
-                glm::radians(45.0f),
-                static_cast<float>(WIDTH) / HEIGHT,
-                0.1f,
-                100.0f
-            );
+            glm::mat4 projection =
+                glm::perspective(
+                    glm::radians(45.0f),
+                    static_cast<float>(WIDTH) / HEIGHT,
+                    0.1f,
+                    100.0f
+                );
 
-            // Send matrices to shader
-            GLint modelLoc =
-                glGetUniformLocation(shaderProgram, "model");
 
+            // Send View Matrix
             GLint viewLoc =
-                glGetUniformLocation(shaderProgram, "view");
-
-            GLint projectionLoc =
-                glGetUniformLocation(shaderProgram, "projection");
-
-            glUniformMatrix4fv(
-                modelLoc,
-                1,
-                GL_FALSE,
-                glm::value_ptr(model)
-            );
+                glGetUniformLocation(
+                    shaderProgram,
+                    "view"
+                );
 
             glUniformMatrix4fv(
                 viewLoc,
@@ -417,6 +564,14 @@ int main()
                 glm::value_ptr(view)
             );
 
+
+            // Send Projection Matrix
+            GLint projectionLoc =
+                glGetUniformLocation(
+                    shaderProgram,
+                    "projection"
+                );
+
             glUniformMatrix4fv(
                 projectionLoc,
                 1,
@@ -424,22 +579,174 @@ int main()
                 glm::value_ptr(projection)
             );
 
-            // Render cube
-            glBindVertexArray(VAO);
 
-            glDrawArrays(GL_TRIANGLES, 0, 36);
+            // ====================================
+            // FLOOR
+            // ====================================
 
-            // Swap buffers and poll events
+            glm::mat4 floorModel(1.0f);
+
+            floorModel = glm::translate(
+                floorModel,
+                glm::vec3(0.0f, -1.0f, 0.0f)
+            );
+
+            floorModel = glm::scale(
+                floorModel,
+                glm::vec3(20.0f, 0.2f, 20.0f)
+            );
+
+            drawCube(
+                shaderProgram,
+                VAO,
+                floorModel,
+                glm::vec3(0.4f, 0.4f, 0.4f),
+                false
+            );
+
+
+            // ====================================
+            // BACK WALL
+            // ====================================
+
+            glm::mat4 backWall(1.0f);
+
+            backWall = glm::translate(
+                backWall,
+                glm::vec3(0.0f, 1.5f, -10.0f)
+            );
+
+            backWall = glm::scale(
+                backWall,
+                glm::vec3(20.0f, 5.0f, 0.2f)
+            );
+
+            drawCube(
+                shaderProgram,
+                VAO,
+                backWall,
+                glm::vec3(0.7f, 0.3f, 0.3f),
+                false
+            );
+
+
+            // ====================================
+            // FRONT WALL
+            // ====================================
+
+            glm::mat4 frontWall(1.0f);
+
+            frontWall = glm::translate(
+                frontWall,
+                glm::vec3(0.0f, 1.5f, 10.0f)
+            );
+
+            frontWall = glm::scale(
+                frontWall,
+                glm::vec3(20.0f, 5.0f, 0.2f)
+            );
+
+            drawCube(
+                shaderProgram,
+                VAO,
+                frontWall,
+                glm::vec3(0.3f, 0.3f, 0.7f),
+                false
+            );
+
+
+            // ====================================
+            // LEFT WALL
+            // ====================================
+
+            glm::mat4 leftWall(1.0f);
+
+            leftWall = glm::translate(
+                leftWall,
+                glm::vec3(-10.0f, 1.5f, 0.0f)
+            );
+
+            leftWall = glm::scale(
+                leftWall,
+                glm::vec3(0.2f, 5.0f, 20.0f)
+            );
+
+            drawCube(
+                shaderProgram,
+                VAO,
+                leftWall,
+                glm::vec3(0.3f, 0.7f, 0.3f),
+                false
+            );
+
+
+            // ====================================
+            // RIGHT WALL
+            // ====================================
+
+            glm::mat4 rightWall(1.0f);
+
+            rightWall = glm::translate(
+                rightWall,
+                glm::vec3(10.0f, 1.5f, 0.0f)
+            );
+
+            rightWall = glm::scale(
+                rightWall,
+                glm::vec3(0.2f, 5.0f, 20.0f)
+            );
+
+            drawCube(
+                shaderProgram,
+                VAO,
+                rightWall,
+                glm::vec3(0.7f, 0.7f, 0.3f),
+                false
+            );
+
+
+            // ====================================
+            // ROTATING CUBE
+            // ====================================
+
+            glm::mat4 cubeModel(1.0f);
+
+            cubeModel = glm::rotate(
+                cubeModel,
+                static_cast<float>(glfwGetTime()),
+                glm::vec3(0.5f, 1.0f, 0.0f)
+            );
+
+            drawCube(
+                shaderProgram,
+                VAO,
+                cubeModel,
+                glm::vec3(1.0f, 1.0f, 1.0f),
+                true
+            );
+
+
+            // ====================================
+            // SWAP BUFFERS
+            // ====================================
+
             glfwSwapBuffers(window);
+
             glfwPollEvents();
         }
     }
     catch (const std::exception& e)
     {
-        std::cerr << "Error: " << e.what() << std::endl;
+        std::cerr << "Error: "
+                  << e.what()
+                  << std::endl;
     }
 
-    // Cleanup
+
+    // ====================================
+    // CLEANUP
+    // ====================================
+
     if (VAO != 0)
         glDeleteVertexArrays(1, &VAO);
 
@@ -450,6 +757,7 @@ int main()
         glDeleteProgram(shaderProgram);
 
     glfwDestroyWindow(window);
+
     glfwTerminate();
 
     return 0;
