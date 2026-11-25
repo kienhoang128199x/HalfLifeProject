@@ -19,3 +19,7 @@ target_link_libraries(HalfLifeClone
     OpenGL::GL
     GLEW::GLEW
 )
+
+target_compile_definitions(HalfLifeClone PRIVATE
+    ASSET_DIR="${CMAKE_CURRENT_SOURCE_DIR}/assets"
+)
