@@ -2727,3 +2727,4 @@ Chúng ta sẽ xây dựng hệ thống va chạm để:
 
 Trước tiên, hãy hoàn thành Milestone 5 và kiểm tra xem nhân vật đã đi, nhìn, nhảy và tiếp đất đúng chưa.
 =================================================================================================================================
+"Tiếp tục dự án HalfLifeClone từ Milestone 6."
