@@ -1,0 +1,3 @@
+/home/kienhoang128/Projects/HalfLifeClone/build/CMakeFiles/HalfLifeClone.dir
+/home/kienhoang128/Projects/HalfLifeClone/build/CMakeFiles/edit_cache.dir
+/home/kienhoang128/Projects/HalfLifeClone/build/CMakeFiles/rebuild_cache.dir
