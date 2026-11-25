@@ -13,6 +13,18 @@
 
 #include "Camera.h"
 
+float playerSpeed = 5.0f;
+
+float gravity = -9.81f;
+
+float verticalVelocity = 0.0f;
+
+float jumpForce = 5.0f;
+
+float groundHeight = 0.0f;
+
+bool isGrounded = true;
+
 const unsigned int WIDTH = 1280;
 const unsigned int HEIGHT = 720;
 
@@ -49,6 +61,35 @@ std::string loadShader(const std::string& path)
     return buffer.str();
 }
 
+void processJump(GLFWwindow* window)
+{
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS
+        && isGrounded)
+    {
+        verticalVelocity = jumpForce;
+        isGrounded = false;
+    }
+}
+
+void updatePhysics(float deltaTime)
+{
+    // Apply gravity
+    verticalVelocity += gravity * deltaTime;
+
+    // Update player position
+    camera.Position.y +=
+        verticalVelocity * deltaTime;
+
+    // Ground collision
+    if (camera.Position.y <= groundHeight)
+    {
+        camera.Position.y = groundHeight;
+
+        verticalVelocity = 0.0f;
+
+        isGrounded = true;
+    }
+}
 
 // ============================================
 // COMPILE SHADER
@@ -204,32 +245,38 @@ void mouse_callback(
 
 void processInput(GLFWwindow* window)
 {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE)
+        == GLFW_PRESS)
     {
         glfwSetWindowShouldClose(window, true);
     }
 
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_W)
+        == GLFW_PRESS)
     {
         camera.ProcessKeyboard(FORWARD, deltaTime);
     }
 
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_S)
+        == GLFW_PRESS)
     {
         camera.ProcessKeyboard(BACKWARD, deltaTime);
     }
 
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_A)
+        == GLFW_PRESS)
     {
         camera.ProcessKeyboard(LEFT, deltaTime);
     }
 
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_D)
+        == GLFW_PRESS)
     {
         camera.ProcessKeyboard(RIGHT, deltaTime);
     }
-}
 
+    processJump(window);
+}
 
 // ============================================
 // DRAW CUBE
@@ -518,6 +565,8 @@ int main()
             // Process input
             processInput(window);
 
+            updatePhysics(deltaTime);    
+            
             // Clear screen
             glClearColor(
                 0.05f,

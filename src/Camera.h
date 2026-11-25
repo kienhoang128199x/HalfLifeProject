@@ -2,6 +2,7 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <cmath>
 
 enum CameraMovement
 {
@@ -26,7 +27,8 @@ public:
     float MovementSpeed;
     float MouseSensitivity;
 
-    Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 3.0f))
+    Camera(glm::vec3 position =
+           glm::vec3(0.0f, 0.0f, 3.0f))
     {
         Position = position;
 
@@ -35,7 +37,7 @@ public:
         Yaw = -90.0f;
         Pitch = 0.0f;
 
-        MovementSpeed = 3.0f;
+        MovementSpeed = 5.0f;
         MouseSensitivity = 0.1f;
 
         updateCameraVectors();
@@ -50,24 +52,42 @@ public:
         );
     }
 
-    void ProcessKeyboard(CameraMovement direction, float deltaTime)
+    void ProcessKeyboard(
+        CameraMovement direction,
+        float deltaTime)
     {
         float velocity = MovementSpeed * deltaTime;
 
+        // Calculate movement direction on XZ plane
+        glm::vec3 forward;
+
+        forward.x = cos(glm::radians(Yaw));
+        forward.y = 0.0f;
+        forward.z = sin(glm::radians(Yaw));
+
+        forward = glm::normalize(forward);
+
+        glm::vec3 right =
+            glm::normalize(
+                glm::cross(forward, WorldUp)
+            );
+
         if (direction == FORWARD)
-            Position += Front * velocity;
+            Position += forward * velocity;
 
         if (direction == BACKWARD)
-            Position -= Front * velocity;
+            Position -= forward * velocity;
 
         if (direction == LEFT)
-            Position -= Right * velocity;
+            Position -= right * velocity;
 
         if (direction == RIGHT)
-            Position += Right * velocity;
+            Position += right * velocity;
     }
 
-    void ProcessMouseMovement(float xOffset, float yOffset)
+    void ProcessMouseMovement(
+        float xOffset,
+        float yOffset)
     {
         xOffset *= MouseSensitivity;
         yOffset *= MouseSensitivity;
@@ -75,7 +95,6 @@ public:
         Yaw += xOffset;
         Pitch += yOffset;
 
-        // Prevent camera from flipping upside down
         if (Pitch > 89.0f)
             Pitch = 89.0f;
 
@@ -86,22 +105,30 @@ public:
     }
 
 private:
+
     void updateCameraVectors()
     {
         glm::vec3 front;
 
-        front.x = cos(glm::radians(Yaw)) *
-                  cos(glm::radians(Pitch));
+        front.x =
+            cos(glm::radians(Yaw)) *
+            cos(glm::radians(Pitch));
 
-        front.y = sin(glm::radians(Pitch));
+        front.y =
+            sin(glm::radians(Pitch));
 
-        front.z = sin(glm::radians(Yaw)) *
-                  cos(glm::radians(Pitch));
+        front.z =
+            sin(glm::radians(Yaw)) *
+            cos(glm::radians(Pitch));
 
         Front = glm::normalize(front);
 
-        Right = glm::normalize(glm::cross(Front, WorldUp));
+        Right = glm::normalize(
+            glm::cross(Front, WorldUp)
+        );
 
-        Up = glm::normalize(glm::cross(Right, Front));
+        Up = glm::normalize(
+            glm::cross(Right, Front)
+        );
     }
 };
